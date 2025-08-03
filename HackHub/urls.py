@@ -22,4 +22,5 @@ from hackhub_apis.urls import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('hackhub_apis.urls')),
+    path('auth-api/',include('rest_framework.urls')),
 ]
