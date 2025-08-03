@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser,Profile
+from .models import CustomUser,Profile,Post,PostMedia
 from django.db import transaction
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -33,4 +33,24 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         Profile.objects.create(user=user,**profile_data)
         return user
+    
+class PostMediaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostMedia
+        fields = ['files']
+
+class PostSerializer(serializers.ModelSerializer):
+    media = PostMediaSerializer(many=True,write_only=True)
+    class Meta:
+        model = Post
+        fields = ['title','content','media']
+
+    @transaction.atomic
+    def create(self, validated_data):
+        media = validated_data.pop('media',[])
+        post = Post.objects.create(**validated_data)
+
+        media_objs = [PostMedia.objects.create(post=post,files=item['files']) for item in media]
+        PostMedia.objects.bulk_create(media_objs)
+        return post
     
