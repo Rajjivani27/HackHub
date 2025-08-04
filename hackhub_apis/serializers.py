@@ -41,16 +41,17 @@ class PostMediaSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     media = PostMediaSerializer(many=True,write_only=True)
+    
     class Meta:
         model = Post
         fields = ['title','content','media']
 
     @transaction.atomic
     def create(self, validated_data):
-        media = validated_data.pop('media',[])
+        media = validated_data.pop('media')
         post = Post.objects.create(**validated_data)
 
-        media_objs = [PostMedia.objects.create(post=post,files=item['files']) for item in media]
+        media_objs = [PostMedia(post=post,files=item['files']) for item in media]
         PostMedia.objects.bulk_create(media_objs)
         return post
     

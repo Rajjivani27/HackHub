@@ -1,3 +1,4 @@
+from .utils import *
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from .models import *
@@ -70,11 +71,21 @@ class PostViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     def create(self,request):
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy()
+
+        files = request.FILES.lists()
+        files_data = media_processing(files)
+
+        serializer_data = {
+            'title': data.get('title'),
+            'content': data.get('content'),
+            'media': files_data
+        }
+
+        serializer = self.get_serializer(data=serializer_data)
         serializer.is_valid(raise_exception=True)
         serializer.save(author = request.user)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
-        
     
     def get_serializer(self,*args,**kwargs):
         return PostSerializer(*args,context=self.get_serializer_context(),**kwargs)
