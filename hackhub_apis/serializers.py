@@ -40,18 +40,26 @@ class PostMediaSerializer(serializers.ModelSerializer):
         fields = ['files']
 
 class PostSerializer(serializers.ModelSerializer):
-    media = PostMediaSerializer(many=True,write_only=True)
-    
+    media = PostMediaSerializer(many=True,write_only=True,required=False)
+    github = serializers.CharField(write_only=True,required=False)
     class Meta:
         model = Post
-        fields = ['title','content','media']
+        fields = ['title','content','media','github']
 
     @transaction.atomic
     def create(self, validated_data):
+        github = validated_data.pop('github')
         media = validated_data.pop('media')
+        content = validated_data['content']
+
+        add = f"\nGithub Link : {github}"
+
+        content = content + add
+        validated_data['content'] = content
         post = Post.objects.create(**validated_data)
 
         media_objs = [PostMedia(post=post,files=item['files']) for item in media]
         PostMedia.objects.bulk_create(media_objs)
         return post
+
     

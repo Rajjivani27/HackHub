@@ -9,6 +9,7 @@ from rest_framework.generics import CreateAPIView,UpdateAPIView,DestroyAPIView
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated,AllowAny
+from .permissions import IsAuthorOrReadOnly
 
 class CustomUserCreateAPI(CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -57,6 +58,8 @@ class PostViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
+        elif self.action == 'update' or self.action == 'destroy':
+            return [IsAuthorOrReadOnly()]
         return [AllowAny()]
     
     def list(self,request):
@@ -79,6 +82,7 @@ class PostViewSet(viewsets.ViewSet):
         serializer_data = {
             'title': data.get('title'),
             'content': data.get('content'),
+            'github': data.get('github'),
             'media': files_data
         }
 
@@ -87,6 +91,20 @@ class PostViewSet(viewsets.ViewSet):
         serializer.save(author = request.user)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
     
+    def partial_update(self,request,pk):
+        posts = Post.objects.all()
+        post = get_object_or_404(posts,pk=pk)
+        serializer = self.get_serializer(instance=post,data = request.data,partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status = status.HTTP_206_PARTIAL_CONTENT)
+
+    def destroy(self,request,pk):
+        instance = get_object_or_404(Post,pk=pk)
+        instance.delete()
+
+        return Response({'Detail':'Deleted Successfully'},status=status.HTTP_204_NO_CONTENT)
+
     def get_serializer(self,*args,**kwargs):
         return PostSerializer(*args,context=self.get_serializer_context(),**kwargs)
     
