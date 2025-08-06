@@ -9,7 +9,7 @@ from rest_framework.generics import CreateAPIView,UpdateAPIView,DestroyAPIView
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated,AllowAny
-from .permissions import IsAuthorOrReadOnly
+from .permissions import IsAuthorOrReadOnly,IsSameUserOrReadOnly
 
 class CustomUserCreateAPI(CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -29,6 +29,8 @@ class CustomUserViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
+        elif self.action == 'partial_update' or self.action == 'update' or self.action == 'delete':
+            return [IsSameUserOrReadOnly()]
         return [AllowAny()]
     
     def list(self,request):
@@ -47,6 +49,13 @@ class CustomUserViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    def partial_update(self,request,pk):
+        user = get_object_or_404(CustomUser,pk=pk)
+        serializer = CustomUserSerializer(instance=user,data = request.data,partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
     
     def get_serializer(self,*args,**kwargs):
         return CustomUserSerializer(*args,context=self.get_serializer_context(),**kwargs)
@@ -58,7 +67,7 @@ class PostViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
-        elif self.action == 'update' or self.action == 'destroy':
+        elif self.action == 'partial_update' or  self.action == 'update' or self.action == 'destroy':
             return [IsAuthorOrReadOnly()]
         return [AllowAny()]
     
@@ -92,8 +101,11 @@ class PostViewSet(viewsets.ViewSet):
         return Response(serializer.data,status=status.HTTP_201_CREATED)
     
     def partial_update(self,request,pk):
+        print(request.user)
         posts = Post.objects.all()
         post = get_object_or_404(posts,pk=pk)
+
+        self.check_object_permissions(request,post)
         serializer = self.get_serializer(instance=post,data = request.data,partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
