@@ -27,9 +27,7 @@ class CustomUserCreateAPI(CreateAPIView):
     
 class CustomUserViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        if self.action == 'create':
-            return [IsAuthenticated()]
-        elif self.action == 'partial_update' or self.action == 'update' or self.action == 'delete':
+        if self.action == 'partial_update' or self.action == 'update' or self.action == 'destroy':
             return [IsSameUserOrReadOnly()]
         return [AllowAny()]
     
@@ -45,7 +43,7 @@ class CustomUserViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     def create(self,request):
-        serializer = self.get_serializer(request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -56,6 +54,13 @@ class CustomUserViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
+
+    def destroy(self,request,pk):
+        user = get_object_or_404(CustomUser,pk=pk)
+        self.check_object_permissions(request,user)
+        user.delete()
+
+        return Response({'Detail':'Account Deleted Successfully'},status=status.HTTP_204_NO_CONTENT)
     
     def get_serializer(self,*args,**kwargs):
         return CustomUserSerializer(*args,context=self.get_serializer_context(),**kwargs)
