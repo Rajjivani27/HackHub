@@ -40,7 +40,7 @@ class PostMediaSerializer(serializers.ModelSerializer):
         fields = ['files']
 
 class PostSerializer(serializers.ModelSerializer):
-    media = PostMediaSerializer(many=True,write_only=True,required=False)
+    media = PostMediaSerializer(many=True,write_only=True)
     github = serializers.CharField(write_only=True,required=False)
     class Meta:
         model = Post
