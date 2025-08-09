@@ -115,6 +115,15 @@ class PostViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status = status.HTTP_206_PARTIAL_CONTENT)
+    
+    def update(self,request,pk):
+        print(f"data : {request.data}")
+        post = get_object_or_404(Post,pk=pk)
+        self.check_object_permissions(request,post)
+        serializer = self.get_serializer(instance=post,data = request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
 
     def destroy(self,request,pk):
         instance = get_object_or_404(Post,pk=pk)
