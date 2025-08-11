@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView,UpdateAPIView,DestroyAPIView
 from rest_framework import status
 from rest_framework import viewsets
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from .permissions import IsAuthorOrReadOnly,IsSameUserOrReadOnly
 
@@ -26,6 +27,7 @@ class CustomUserCreateAPI(CreateAPIView):
         return {'request':self.request}
     
 class CustomUserViewSet(viewsets.ViewSet):
+    lookup_field = 'username'
     def get_permissions(self):
         if self.action == 'partial_update' or self.action == 'update' or self.action == 'destroy':
             return [IsSameUserOrReadOnly()]
@@ -36,16 +38,24 @@ class CustomUserViewSet(viewsets.ViewSet):
         serializer = CustomUserSerializer(queryset,many=True)
         return Response(serializer.data)
     
-    def retrieve(self,request,pk=None):
-        queryset = CustomUser.objects.all()
-        user = get_object_or_404(queryset,pk=pk)
-        serializer = CustomUserSerializer(user)
+    def retrieve(self,request,username=None):
+        try:
+            queryset = CustomUser.objects.all()
+            user = get_object_or_404(queryset,username=username)
+            serializer = self.get_serializer(user)
+        except ValueError:
+            return Response({'ValueError':"Please enter the correct username for field 'username'"})
+        except AssertionError:
+            return Response({'Server Error':'Something has been broken on our side, please come after some time'})
         return Response(serializer.data)
     
     def create(self,request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        except AssertionError:
+            return Response({'Server Error':'Something has been broken on our side, please come after some time'},status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
         return Response(serializer.data)
 
     def partial_update(self,request,pk):
