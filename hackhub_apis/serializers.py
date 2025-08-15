@@ -44,7 +44,7 @@ class PostSerializer(serializers.ModelSerializer):
     github = serializers.CharField(write_only=True,required=False)
     class Meta:
         model = Post
-        fields = ['title','content','media','github']
+        fields = ['title','content','media','github','author']
 
     @transaction.atomic
     def create(self, validated_data):
