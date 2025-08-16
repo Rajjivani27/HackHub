@@ -11,20 +11,6 @@ from rest_framework import viewsets
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from .permissions import IsAuthorOrReadOnly,IsSameUserOrReadOnly
-
-class CustomUserCreateAPI(CreateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-
-    def create(self,request,*args,**kwargs):
-        serializer = self.get_serializer(data = request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(request.data,status=status.HTTP_200_OK)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    
-    def get_serializer_context(self):
-        return {'request':self.request}
     
 class CustomUserViewSet(viewsets.ViewSet):
     lookup_field = 'username'
