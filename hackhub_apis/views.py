@@ -72,13 +72,17 @@ class PostViewSet(viewsets.ViewSet):
             return [IsAuthorOrReadOnly()]
         return [AllowAny()]
     
+    def get_queryset(self):
+        queryset = Post.objects.all().select_related('author')
+        return queryset
+    
     def list(self,request):
-        queryset = Post.objects.all()
+        queryset = self.get_queryset()
         serializer = PostSerializer(queryset,many=True)
         return Response(serializer.data)
     
     def retrieve(self,request,pk=None):
-        queryset = Post.objects.all()
+        queryset = self.get_queryset()
         post = get_object_or_404(queryset,pk=pk)
         serializer = PostSerializer(post)
         return Response(serializer.data)
@@ -102,8 +106,7 @@ class PostViewSet(viewsets.ViewSet):
         return Response(serializer.data,status=status.HTTP_201_CREATED)
     
     def partial_update(self,request,pk):
-        print(request.user)
-        posts = Post.objects.all()
+        posts = self.get_queryset()
         post = get_object_or_404(posts,pk=pk)
 
         self.check_object_permissions(request,post)
@@ -113,7 +116,6 @@ class PostViewSet(viewsets.ViewSet):
         return Response(serializer.data,status = status.HTTP_206_PARTIAL_CONTENT)
     
     def update(self,request,pk):
-        print(f"data : {request.data}")
         post = get_object_or_404(Post,pk=pk)
         self.check_object_permissions(request,post)
         serializer = self.get_serializer(instance=post,data = request.data)
