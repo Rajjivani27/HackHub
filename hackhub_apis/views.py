@@ -12,37 +12,13 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from .permissions import IsAuthorOrReadOnly,IsSameUserOrReadOnly
     
-class CustomUserViewSet(viewsets.ViewSet):
+class CustomUserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
+    queryset = CustomUser.objects.all()
     def get_permissions(self):
         if self.action == 'partial_update' or self.action == 'update' or self.action == 'destroy':
             return [IsSameUserOrReadOnly()]
         return [AllowAny()]
-    
-    def list(self,request):
-        queryset = CustomUser.objects.all()
-        serializer = CustomUserSerializer(queryset,many=True)
-        return Response(serializer.data)
-    
-    def retrieve(self,request,username=None):
-        try:
-            queryset = CustomUser.objects.all()
-            user = get_object_or_404(queryset,username=username)
-            serializer = self.get_serializer(user)
-        except ValueError:
-            return Response({'ValueError':"Please enter the correct username for field 'username'"})
-        except AssertionError:
-            return Response({'Server Error':'Something has been broken on our side, please come after some time'})
-        return Response(serializer.data)
-    
-    def create(self,request):
-        try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-        except AssertionError:
-            return Response({'Server Error':'Something has been broken on our side, please come after some time'},status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
-        return Response(serializer.data)
 
     def partial_update(self,request,pk):
         user = get_object_or_404(CustomUser,pk=pk)
@@ -50,13 +26,6 @@ class CustomUserViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
-
-    def destroy(self,request,pk):
-        user = get_object_or_404(CustomUser,pk=pk)
-        self.check_object_permissions(request,user)
-        user.delete()
-
-        return Response({'Detail':'Account Deleted Successfully'},status=status.HTTP_204_NO_CONTENT)
     
     def get_serializer(self,*args,**kwargs):
         return CustomUserSerializer(*args,context=self.get_serializer_context(),**kwargs)
@@ -64,7 +33,8 @@ class CustomUserViewSet(viewsets.ViewSet):
     def get_serializer_context(self):
         return {'request':self.request}
     
-class PostViewSet(viewsets.ViewSet):
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
@@ -75,17 +45,6 @@ class PostViewSet(viewsets.ViewSet):
     def get_queryset(self):
         queryset = Post.objects.all().select_related('author')
         return queryset
-    
-    def list(self,request):
-        queryset = self.get_queryset()
-        serializer = PostSerializer(queryset,many=True)
-        return Response(serializer.data)
-    
-    def retrieve(self,request,pk=None):
-        queryset = self.get_queryset()
-        post = get_object_or_404(queryset,pk=pk)
-        serializer = PostSerializer(post)
-        return Response(serializer.data)
     
     def create(self,request):
         data = request.data.copy()
@@ -122,12 +81,6 @@ class PostViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
-
-    def destroy(self,request,pk):
-        instance = get_object_or_404(Post,pk=pk)
-        instance.delete()
-
-        return Response({'Detail':'Deleted Successfully'},status=status.HTTP_204_NO_CONTENT)
 
     def get_serializer(self,*args,**kwargs):
         return PostSerializer(*args,context=self.get_serializer_context(),**kwargs)
