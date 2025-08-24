@@ -3,6 +3,10 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,Permissi
 from .managers import CustomUserManager
 from django.core.validators import FileExtensionValidator
 from PIL import Image
+from django.db.models.signals import (
+    post_save,
+    post_delete
+)
 
 class CustomUser(AbstractBaseUser,PermissionsMixin):
     email = models.EmailField(unique=True)

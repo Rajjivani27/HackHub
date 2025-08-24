@@ -1,6 +1,7 @@
 from .utils import *
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+from django.core.cache import cache
 from .models import *
 from .serializers import *
 from rest_framework.response import Response
@@ -11,6 +12,13 @@ from rest_framework import viewsets
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from .permissions import IsAuthorOrReadOnly,IsSameUserOrReadOnly
+from django.dispatch import receiver
+
+@receiver([post_save,post_delete],sender = Post)
+def clear_cache_func(sender,**kwargs):
+    posts = cache.get("posts_lists")
+    if posts:
+        cache.delete("posts_lists")
     
 class CustomUserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
@@ -41,6 +49,20 @@ class PostViewSet(viewsets.ModelViewSet):
         elif self.action == 'partial_update' or  self.action == 'update' or self.action == 'destroy':
             return [IsAuthorOrReadOnly()]
         return [AllowAny()]
+    
+    
+    def list(self, request, *args, **kwargs):
+        cache_key = "posts_list"
+        posts = cache.get(cache_key)
+
+        if posts is None:
+            print("Came here")
+            serializer = self.get_serializer(self.queryset,many=True)
+            posts = serializer.data
+            cache.set(cache_key,posts,timeout=60 * 15)
+        print("Didn't get in")
+
+        return Response(posts,status=status.HTTP_200_OK)
     
     def get_queryset(self):
         queryset = Post.objects.all().select_related('author')

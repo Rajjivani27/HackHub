@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'dj_rest_auth',
     'hackhub_apis',
+    'django_redis',
 ]
 
 MIDDLEWARE = [
@@ -82,6 +83,16 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     )
+}
+
+CACHES = {
+    "default" : {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS" : "django_redis.client.DefaultClient"
+        }
+    }
 }
 
 
