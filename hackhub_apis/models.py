@@ -7,6 +7,8 @@ from django.db.models.signals import (
     post_save,
     post_delete
 )
+from django.dispatch import receiver
+from django.core.cache import cache
 
 class CustomUser(AbstractBaseUser,PermissionsMixin):
     email = models.EmailField(unique=True)
@@ -80,3 +82,15 @@ class Follows(models.Model):
 
     def __str__(self):
         return f"{self.follower} follows {self.followed}"
+    
+@receiver([post_delete,post_save],sender = Post)
+def clear_cache_func(sender,**kwargs):
+    print("I have came here")
+    cache.delete("posts_lists")
+    print("Cleared")
+
+    posts = cache.get("posts_lists")
+    if posts is None:
+        print("Work Done")
+    else:
+        print("There is still something")

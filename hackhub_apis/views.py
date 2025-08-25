@@ -13,12 +13,10 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from .permissions import IsAuthorOrReadOnly,IsSameUserOrReadOnly
 from django.dispatch import receiver
-
-@receiver([post_save,post_delete],sender = Post)
-def clear_cache_func(sender,**kwargs):
-    posts = cache.get("posts_lists")
-    if posts:
-        cache.delete("posts_lists")
+from django.db.models.signals import (
+    post_save,
+    post_delete
+)
     
 class CustomUserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
@@ -42,7 +40,9 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return {'request':self.request}
     
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
+    def get_queryset(self):
+        return Post.objects.all()
+    
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
@@ -52,12 +52,18 @@ class PostViewSet(viewsets.ModelViewSet):
     
     
     def list(self, request, *args, **kwargs):
-        cache_key = "posts_list"
+        """
+        Use self.get_queryset() method to get queryset instead of using-
+        self.queryset variable for cache purpose.
+        Because in get_queryset() method, queryset everytime get evaluated,
+        whereas in variable its get evaluated only one time.
+        """
+        cache_key = "posts_lists"
         posts = cache.get(cache_key)
 
         if posts is None:
             print("Came here")
-            serializer = self.get_serializer(self.queryset,many=True)
+            serializer = self.get_serializer(self.get_queryset(),many=True)
             posts = serializer.data
             cache.set(cache_key,posts,timeout=60 * 15)
         print("Didn't get in")
