@@ -85,12 +85,4 @@ class Follows(models.Model):
     
 @receiver([post_delete,post_save],sender = Post)
 def clear_cache_func(sender,**kwargs):
-    print("I have came here")
     cache.delete("posts_lists")
-    print("Cleared")
-
-    posts = cache.get("posts_lists")
-    if posts is None:
-        print("Work Done")
-    else:
-        print("There is still something")

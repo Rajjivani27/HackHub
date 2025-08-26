@@ -62,11 +62,9 @@ class PostViewSet(viewsets.ModelViewSet):
         posts = cache.get(cache_key)
 
         if posts is None:
-            print("Came here")
             serializer = self.get_serializer(self.get_queryset(),many=True)
             posts = serializer.data
             cache.set(cache_key,posts,timeout=60 * 15)
-        print("Didn't get in")
 
         return Response(posts,status=status.HTTP_200_OK)
     
