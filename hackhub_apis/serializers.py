@@ -27,7 +27,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         profile_data = validated_data.pop('profile')
         validated_data.pop('password2')
         password = validated_data.pop('password')
-        user = CustomUser.objects.create(**validated_data)
+        user = CustomUser(**validated_data)
         user.set_password(password)
         user.is_active = False
         user.save()
@@ -62,5 +62,9 @@ class PostSerializer(serializers.ModelSerializer):
         media_objs = [PostMedia(post=post,files=item['files']) for item in media]
         PostMedia.objects.bulk_create(media_objs)
         return post
+    
+class VerifyEmailSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
 
     

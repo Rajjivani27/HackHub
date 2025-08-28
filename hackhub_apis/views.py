@@ -6,7 +6,7 @@ from .models import *
 from .serializers import *
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView,UpdateAPIView,DestroyAPIView
+from rest_framework.generics import CreateAPIView,UpdateAPIView,DestroyAPIView,GenericAPIView
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.viewsets import ModelViewSet
@@ -17,6 +17,8 @@ from django.db.models.signals import (
     post_save,
     post_delete
 )
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode
     
 class CustomUserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
@@ -113,6 +115,31 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def get_serializer_context(self,*args,**kwargs):
         return {'request':self.request}
+    
+class EmailVerificationAPI(GenericAPIView):
+    serializer_class = VerifyEmailSerializer
+    permission_classes = []
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uidb64 = serializer.validated_data['uid']
+        token = serializer.validated_data['token']
+
+        try:
+            user_id = force_bytes(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(id = user_id)
+        except(TypeError,ValueError,OverflowError,CustomUser.DoesNotExist):
+            user = None
+        if user and email_verification_token.check_token(user,token):
+            user.is_active = True
+            user.save()
+
+            return Response({"Success" : "Email verification successful"},status=status.HTTP_200_OK)
+        else:
+            return Response({"Error" : "Invalid or expired verification link"},status=status.HTTP_400_BAD_REQUEST)
+
+        
 
 
 # Create your views here.

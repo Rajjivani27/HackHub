@@ -1,6 +1,6 @@
 import re
 from .tokens import email_verification_token
-from django.utils.http import urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.urls import reverse
 from django.core.mail import send_mail
@@ -16,16 +16,14 @@ def media_processing(files) -> list:
 
     return files_data
 
-def send_verification_email(user,request):
-    uid = urlsafe_base64_decode(force_bytes(user.pk))
+def send_verification_email(user):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = email_verification_token.make_token(user)
 
-    verification_link = request.build_absolute_uri(
-        reverse('verify_email_confirm',kwargs={'uid64':uid,'token':token})
-    )
+    verification_link = 'http://127.0.0.1:8000/auth/verify/email/' #Endpoint which will be called from frontend through POST API call with uid and token
 
     subject = "Verify Email"
-    message = f"Hii {user.username},\nPlease Verify your email by clicking below link:\n{verification_link}"
+    message = f"Hii {user.username},\nPlease Verify your email by clicking below link:\n{verification_link}\n uidb64 = {uid}\n Token={token}" #Added token and uidb64 externally just for now to testing, will remove when integrating with fronend
     to_user = user.email
 
     send_mail(
