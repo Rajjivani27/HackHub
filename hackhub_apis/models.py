@@ -9,6 +9,7 @@ from django.db.models.signals import (
 )
 from django.dispatch import receiver
 from django.core.cache import cache
+from .utils import send_verification_email
 
 class CustomUser(AbstractBaseUser,PermissionsMixin):
     email = models.EmailField(unique=True)
@@ -86,3 +87,7 @@ class Follows(models.Model):
 @receiver([post_delete,post_save],sender = Post)
 def clear_cache_func(sender,**kwargs):
     cache.delete("posts_lists")
+
+@receiver([post_save],sender = CustomUser)
+def send_email(sender,instance,created,*args,**kwargs):
+    send_verification_email(instance)
