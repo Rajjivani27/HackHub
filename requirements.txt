@@ -5,3 +5,4 @@ django-cors-headers
 dj-rest-auth
 djangorestframework-simplejwt
 dj-rest-auth
+googel-generativeai
