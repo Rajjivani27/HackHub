@@ -19,7 +19,15 @@ from django.db.models.signals import (
 )
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode
-    
+import google.generativeai as genai
+from HackHub import settings
+
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+chat_session = model.start_chat(history=[])
+
 class CustomUserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     queryset = CustomUser.objects.all()
@@ -76,6 +84,15 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def create(self,request):
         data = request.data.copy()
+
+        title = data.get('title')
+        content = data.get('content')
+
+        abusive_words = abuse_detector(title,content,chat_session)
+
+        if abusive_words != []:
+            response = {'inappropriate content' : 'In your post,we have found some abusive/vulgur words/content or inappropriate langauge, please remove it for doing a post'}
+            return Response(response,status=status.HTTP_406_NOT_ACCEPTABLE)
 
         files = request.FILES.lists()
         files_data = media_processing(files)
