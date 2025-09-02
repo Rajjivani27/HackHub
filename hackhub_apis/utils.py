@@ -7,6 +7,8 @@ from django.core.mail import send_mail
 from django.utils.safestring import mark_safe
 from HackHub.settings import EMAIL_HOST_USER
 from django.http.request import HttpRequest
+
+
 def media_processing(files) -> list:
     files_data = []
 

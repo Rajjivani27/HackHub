@@ -90,4 +90,5 @@ def clear_cache_func(sender,**kwargs):
 
 @receiver([post_save],sender = CustomUser)
 def send_email(sender,instance,created,*args,**kwargs):
-    send_verification_email(instance)
+    if created:
+        send_verification_email(instance)
