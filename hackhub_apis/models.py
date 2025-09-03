@@ -31,6 +31,8 @@ class Profile(models.Model):
     user_bio = models.TextField(max_length=300,blank=True,null=True)
     profile_pic = models.ImageField(upload_to='media/',blank=True,null=True)
     dob = models.DateField()
+    university = models.TextField(max_length=200)
+    github = models.TextField()
     following = models.ManyToManyField(
         'self',
         symmetrical=False,
@@ -43,11 +45,19 @@ class Profile(models.Model):
         return f"{self.user.username}'s Profile"
     
 class Post(models.Model):
+    STATUS_CHOICES = [
+        ("live","LIVE"),
+        ("development","DEVELOPMENT"),
+        ("archived","ARCHIVED")
+    ]
     author = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='posts')
     title = models.CharField(max_length=100)
     content = models.TextField()
+    technologies = models.TextField()
+    category = models.CharField()
     likes = models.ManyToManyField(CustomUser,related_name='liked_posts',blank=True)
     created_at = models.DateField(auto_now_add=True)
+    status = models.CharField(choices=STATUS_CHOICES,default="live")
 
     def total_likes(self):
         return self.likes.count()
@@ -83,6 +93,13 @@ class Follows(models.Model):
 
     def __str__(self):
         return f"{self.follower} follows {self.followed}"
+    
+class TeamFinder(models.Model):
+    user = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name="team_finders")
+    title = models.CharField(max_length=100)
+    details = models.TextField()
+    created_at = models.DateField(auto_now_add=True)
+    last_date = models.DateField()
     
 @receiver([post_delete,post_save],sender = Post)
 def clear_cache_func(sender,**kwargs):
