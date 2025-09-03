@@ -31,8 +31,8 @@ class Profile(models.Model):
     user_bio = models.TextField(max_length=300,blank=True,null=True)
     profile_pic = models.ImageField(upload_to='media/',blank=True,null=True)
     dob = models.DateField()
-    university = models.TextField(max_length=200)
-    github = models.TextField()
+    university = models.TextField(max_length=200,null=True,blank=True)
+    github = models.TextField(blank=True,null=True)
     following = models.ManyToManyField(
         'self',
         symmetrical=False,
@@ -53,8 +53,8 @@ class Post(models.Model):
     author = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='posts')
     title = models.CharField(max_length=100)
     content = models.TextField()
-    technologies = models.TextField()
-    category = models.CharField()
+    technologies = models.TextField(null=True,blank=True)
+    category = models.CharField(default="Project")
     likes = models.ManyToManyField(CustomUser,related_name='liked_posts',blank=True)
     created_at = models.DateField(auto_now_add=True)
     status = models.CharField(choices=STATUS_CHOICES,default="live")
