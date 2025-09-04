@@ -12,8 +12,8 @@ from django.core.cache import cache
 from .utils import send_verification_email
 
 class CustomUser(AbstractBaseUser,PermissionsMixin):
-    email = models.EmailField(unique=True)
-    username = models.CharField(unique=True,max_length=20)
+    email = models.CharField(unique=True)
+    username = models.CharField(unique=True,max_length=50)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -53,8 +53,8 @@ class Post(models.Model):
     author = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='posts')
     title = models.CharField(max_length=100)
     content = models.TextField()
-    technologies = models.TextField(null=True,blank=True)
-    category = models.CharField(default="Project")
+    technologies = models.JSONField(default=list,null=True,blank=True)
+    category = models.JSONField(default=list,blank=True,null=True)
     likes = models.ManyToManyField(CustomUser,related_name='liked_posts',blank=True)
     created_at = models.DateField(auto_now_add=True)
     status = models.CharField(choices=STATUS_CHOICES,default="live")
