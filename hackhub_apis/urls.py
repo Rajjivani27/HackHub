@@ -15,5 +15,6 @@ router.register(r'posts',PostViewSet,basename='posts')
 urlpatterns = [
     path('api/token/',TokenObtainPairView.as_view(),name="token_obtain_api"),
     path('api/token/refresh/',TokenRefreshView.as_view(),name="token_refresh_api"),
-    path('auth/verify/email/',EmailVerificationAPI.as_view(),name="verify-email")
+    path('auth/verify/email/',EmailVerificationAPI.as_view(),name="verify-email"),
+    path('logout_api/',LogoutAPI.as_view(),name="logout_api")
 ] + router.urls

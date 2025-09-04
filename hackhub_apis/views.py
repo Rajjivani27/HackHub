@@ -21,6 +21,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode
 import google.generativeai as genai
 from HackHub import settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 genai.configure(api_key=settings.GOOGLE_API_KEY)
 
@@ -83,7 +84,9 @@ class PostViewSet(viewsets.ModelViewSet):
         return queryset
     
     def create(self,request):
+        print("Came Here")
         data = request.data.copy()
+        print(data)
 
         title = data.get('title')
         content = data.get('content')
@@ -155,6 +158,18 @@ class EmailVerificationAPI(GenericAPIView):
             return Response({"Success" : "Email verification successful"},status=status.HTTP_200_OK)
         else:
             return Response({"Error" : "Invalid or expired verification link"},status=status.HTTP_400_BAD_REQUEST)
+        
+class LogoutAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self,request):
+        try:
+            refresh_token = request.data.get("refresh")
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message":"Successfully Logged out"},status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
 
         
 
