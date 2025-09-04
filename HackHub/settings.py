@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-#s*4t1mwi8(kud=m-a1y8-=_q(%^*s=0gv9fzjoegq=88$17=9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'hackhub_apis.CustomUser'
 
