@@ -93,7 +93,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
         abusive_words = abuse_detector(title,content,chat_session)
 
-        if abusive_words != []:
+        if len(abusive_words) > 1 and abusive_words[0] != 'ok':
             response = {'inappropriate content' : 'In your post,we have found some abusive/vulgur words/content or inappropriate langauge, please remove it for doing a post'}
             return Response(response,status=status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -104,6 +104,9 @@ class PostViewSet(viewsets.ModelViewSet):
             'title': data.get('title'),
             'content': data.get('content'),
             'github': data.get('github'),
+            'author':data.get('author'),
+            'technologies': data.get('technologies'),
+            'category': data.get('category'),
             'media': files_data
         }
 
@@ -116,8 +119,19 @@ class PostViewSet(viewsets.ModelViewSet):
         posts = self.get_queryset()
         post = get_object_or_404(posts,pk=pk)
 
+        data = request.data.copy()
+
+        files = request.FILES.lists()
+        files_data = media_processing(files)
+
+        print(f"Files : {files_data}")
+
+        serializer_data = {
+            'media': files_data
+        }
+
         self.check_object_permissions(request,post)
-        serializer = self.get_serializer(instance=post,data = request.data,partial=True)
+        serializer = self.get_serializer(instance=post,data = serializer_data,partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status = status.HTTP_206_PARTIAL_CONTENT)
@@ -135,6 +149,29 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def get_serializer_context(self,*args,**kwargs):
         return {'request':self.request}
+    
+class TeamOpportunityViewSet(viewsets.ModelViewSet):
+    def get_serializer_context(self,*args,**kwargs):
+        return {'request':self.request}
+    
+    def get_serializer(self,*args,**kwargs):
+        return TeamOpportunitySerializer(*args,context=self.get_serializer_context(),**kwargs)
+    
+    def get_queryset(self):
+        queryset = TeamFinder.objects.all()
+        return queryset
+    
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user = request.user)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+
+
     
 class EmailVerificationAPI(GenericAPIView):
     serializer_class = VerifyEmailSerializer
@@ -170,6 +207,22 @@ class LogoutAPI(APIView):
             return Response({"message":"Successfully Logged out"},status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error":str(e)},status=status.HTTP_400_BAD_REQUEST)
+        
+class WhoAmIAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request):
+        user = request.user
+
+        response = Response(
+                    {
+                    'id': user.id,
+                    'email': user.email,
+                    'username': user.username,
+                    }
+                )
+
+        return response
 
         
 
