@@ -54,7 +54,7 @@ class Post(models.Model):
     title = models.CharField(max_length=100)
     content = models.TextField()
     technologies = models.JSONField(default=list,null=True,blank=True)
-    category = models.JSONField(default=list,blank=True,null=True)
+    category = models.CharField(default=list,blank=True,null=True)
     likes = models.ManyToManyField(CustomUser,related_name='liked_posts',blank=True)
     created_at = models.DateField(auto_now_add=True)
     status = models.CharField(choices=STATUS_CHOICES,default="live")
